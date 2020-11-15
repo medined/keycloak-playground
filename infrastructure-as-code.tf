@@ -14,6 +14,7 @@ resource "aws_key_pair" "keycloak" {
 resource "aws_instance" "keycloak" {
   ami           = var.ami
   associate_public_ip_address = "true"
+  iam_instance_profile = aws_iam_instance_profile.keycloak.name
   instance_type = var.instance_type
   key_name      = aws_key_pair.keycloak.key_name
   subnet_id     = var.subnet_id

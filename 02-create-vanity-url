@@ -4,6 +4,12 @@
 # Create a vanity subdomain for keycloak.
 #
 
+type certbot
+if [ $? != 0 ]; then
+  echo "Please install 'certbot'."
+  exit 1
+fi
+
 
 #
 # CONFIGURATION
@@ -58,3 +64,22 @@ aws route53 change-resource-record-sets \
   --change-batch file:///tmp/change-resource-record-set.json
 
 rm /tmp/change-resource-record-set.json
+
+yum install epel-release
+yum update
+yum install certbot python2-certbot-dns-route53 python-pip
+pip install --upgrade pip
+pip install futures
+
+
+pip install certbot-dns-route53
+
+certbot certonly --standalone
+
+
+certbot --config-dir "." --work-dir "." --logs-dir "."
+
+
+certbot certonly \
+  --dns-route53 \
+  -d keycloak.davidm.xyz
