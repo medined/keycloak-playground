@@ -79,9 +79,11 @@
     - name: get ssl certificate
       command: certbot certonly -n --dns-route53 -d {{ keycloak_fqdn }}
 
-    #  /etc/letsencrypt/live/keycloak.davidm.xyz/fullchain.pem
-  #    /etc/letsencrypt/live/keycloak.davidm.xyz/privkey.pem
-
+    - name: change permissions of pem files so container can read them
+      file:
+        path: /etc/letsencrypt/archive
+        recurse: yes
+        mode: '0655'
 
     - name: stop keycloak container
       command: docker stop keycloak
@@ -92,4 +94,15 @@
       ignore_errors: True
 
     - name: start keycloak container
-      command: docker run --name keycloak --detach -p 9001:9001 -p 8080:8080 -p 8443:8443 -e KEYCLOAK_USER={{ keycloak_admin_username }} -e KEYCLOAK_PASSWORD={{ keycloak_admin_password }} {{ keycloak_image }}
+      command: |
+        docker run
+          --name keycloak
+          --detach
+          -p 9001:9001
+          -p 8080:8080
+          -p 8443:8443
+          -e KEYCLOAK_USER={{ keycloak_admin_username }}
+          -e KEYCLOAK_PASSWORD={{ keycloak_admin_password }}
+          -v /etc/letsencrypt/live/keycloak.davidm.xyz/fullchain.pem:/etc/x509/https/tls.crt
+          -v /etc/letsencrypt/live/keycloak.davidm.xyz/privkey.pem:/etc/x509/https/tls.key
+          {{ keycloak_image }}
