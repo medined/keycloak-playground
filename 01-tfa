@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#
+# Provision the AWS Infrastructure
+#
+
+terraform init
+
+terraform apply \
+    --auto-approve

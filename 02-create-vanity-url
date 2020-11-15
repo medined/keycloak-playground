@@ -1,0 +1,60 @@
+#!/bin/bash
+
+#
+# Create a vanity subdomain for keycloak.
+#
+
+
+#
+# CONFIGURATION
+#
+# Find the service endpoint on https://docs.aws.amazon.com/general/latest/gr/elb.html. It
+# will be different for each Region. Ingress is using a network load balancer so look in
+# that column. Note that this value is not the same as the Hosted Zone Id found on the
+# Route53 pages. This value is set because it should not change if you use us-east-1.
+#
+HOSTED_ZONE_ID=${HOSTED_ZONE_ID:-"Z26RNL4JYFTOTI"}
+KEYCLOAK_SUBDOMAIN_NAME=${KEYCLOAK_SUBDOMAIN_NAME:-"keycloak"}
+
+#
+# INPUT VALIDATION
+#
+if [ -z $K8S_DOMAIN_NAME ]; then
+    echo "Missing Environment Variable: K8S_DOMAIN_NAME"
+    exit 1
+fi
+
+FQDN="$KEYCLOAK_SUBDOMAIN_NAME.$K8S_DOMAIN_NAME"
+
+IP_ADDRESS=$(terraform output keycloak_public_ip)
+if [ -z $IP_ADDRESS ]; then
+    echo "Missing Terraform output:"
+    exit 1
+fi
+
+HOSTED_ZONE_PATH=$(aws route53 list-hosted-zones-by-name \
+  --dns-name $K8S_DOMAIN_NAME \
+  --query "HostedZones[0].Id" \
+  --output text)
+
+HOSTED_ZONE_ID_FROM_R53=$(echo $HOSTED_ZONE_PATH | cut -d'/' -f3)
+
+cat <<EOF > /tmp/change-resource-record-set.json
+{
+  "Changes": [{
+    "Action": "UPSERT",
+    "ResourceRecordSet": {
+      "Name": "$FQDN",
+      "Type": "A",
+      "TTL": 300,
+      "ResourceRecords": [{"Value": "$IP_ADDRESS"}]
+    }
+  }]
+}
+EOF
+
+aws route53 change-resource-record-sets \
+  --hosted-zone-id $HOSTED_ZONE_ID_FROM_R53 \
+  --change-batch file:///tmp/change-resource-record-set.json
+
+rm /tmp/change-resource-record-set.json

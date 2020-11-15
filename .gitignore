@@ -1,2 +1,8 @@
-keycloak-4.1.0.Final.tar.gz
-keycloak-4.1.0.Final
+# Configuration
+.direnv
+.envrc
+.git
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfvars

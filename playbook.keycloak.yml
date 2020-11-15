@@ -1,0 +1,75 @@
+---
+- hosts: all
+  gather_facts: false
+  become: yes
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python
+    keycloak_image: quay.io/keycloak/keycloak:11.0.3
+
+  tasks:
+
+    - name: upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: add docker yum repository
+      command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+    - name: install packages
+      yum:
+        state: latest
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+
+    - name: Start and enable docker
+      systemd:
+        enabled: yes
+        name: docker
+        state: started
+
+    - name: get kernel name
+      command: uname -s
+      register: kernel_name
+
+    - name: get machine name
+      command: uname -m
+      register: machine_name
+
+    - name: Download docker-compose
+      get_url:
+        dest: /usr/local/bin/docker-compose
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-{{kernel_name.stdout}}-{{machine_name.stdout}}"
+        mode: 0755
+
+    - name: add docker group
+      group:
+        name: docker
+        state: present
+
+
+    - name: adding existing user '{{ user }}' to group docker
+      user:
+        name: '{{ ssh_user }}'
+        groups: docker
+        append: yes
+
+    - name: Download jq
+      get_url:
+        dest: /usr/local/bin/jq
+        url: https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+        mode: 0755
+
+    - name: stop keycloak container
+      command: docker stop keycloak
+      ignore_errors: True
+
+    - name: remove keycloak container
+      command: docker rm keycloak
+      ignore_errors: True
+
+    - name: start keycloak container
+      command: docker run --name keycloak --detach -p 9001:9001 -p 8080:8080 -p 8443:8443 -e KEYCLOAK_USER={{ keycloak_admin_username }} -e KEYCLOAK_PASSWORD={{ keycloak_admin_password }} {{ keycloak_image }}

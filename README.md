@@ -1,62 +1,70 @@
-# keycloak-playground
+# OpenRMF at AWS
 
-experiments with keycloak
+This project provisions an EC2 server with the OpenRMF software running on it.
 
-## Installation
+See **Caution** section below.
 
-* uncompress the software
+2020-Jun-18 - The project is based on OpenRMF Core OSS 1.0.
+
+## Security
+
+When provisioning the server, the RMF Admin password will be displayed in the output.
+
+Please manually change the admin password for keycloak. It is hardcoded in the OpenRMF project.
+
+## Links
+
+* https://www.openrmf.io/
+
+## Create PKI Public Key
+
+You'll need an EC2 key pair in order to SSH into the server and to let Ansible run its playbooks. After creating a key pair, generate a public key using the following command:
 
 ```
-curl -O -L https://downloads.jboss.org/keycloak/4.1.0.Final/keycloak-4.1.0.Final.tar.gz
-tar xvfz keycloak-4.1.0.Final.tar.gz
-cd keycloak-4.1.0.Final\bin
+ssh-keygen -y -f $HOME/Downloads/pem/openrmf.pem > $HOME/Downloads/pem/openrmf.pub
 ```
 
-* start the server
+## Initialization
 
-Select a non-standard port (ie. not 8080) to avoid future conflicts
-with other web applications.
+* Copy the variable example file.
 
+```bash
+cp variables.tf.example variables.tf
 ```
-./standalone.sh -Djboss.socket.binding.port-offset=9876
+
+* Setup `variables.tf`. Make sure to update these variables:
+    * aws_profile
+    * pki_private_key
+    * rmf_admin_password
+    * subnet_id
+    * vpc_id
+
+* Terraform
+
+```bash
+terraform init
+terraform apply
 ```
 
-* create the admin user
+* SSH to the EC2 server.
 
-Visit http://localhost:8080/auth. Create an `admin` user with a password
-of `admin`.
+```bash
+./ssh-to-server.sh
+```
 
-* login to web console
+* Visit the Keycloak web page.
 
-Visit http://localhost:8080/auth/admin/.
+```bash
+./open-keycloak-page.sh
+```
 
-* add realm
+* Visit the OpenRMF web page.
 
-** Mouse over the Master at the top left of the page. Then click
-`Add realm`.
-** enter `frog` as the name.
-** click Create
-** note that the frog realm is selected instead of Master.
+```bash
+./open-openrmf-page.sh
+```
 
-* add user
+## Caution
 
-** Click Manage > Users in left-hand section of the page.
-** Click `Add user` button.
-** Enter `prince` as the username.
-** Click `Save` button.
-** Click the `Credentials` tab.
-** Set the password to `password`.
-** Click `Reset Password` button.
+In order to make this automation work, I needed to provide my own versions of two files. These are `setup-realm-linux.sh` and `docker-compose.yml` from the OpenRMF zip file. This makes this project brittle.
 
-* logout
-
-** Click on `Admin` in top-right.
-** Select `Sign Out`.
-
-* login as frog user
-
-** Visit http://localhost:8080/auth/realms/frog/account
-** use the frog/password credentials to login.
-** enter password as your new password.
-** enter an email, first name, and last name for the prince user.
-** Click `Save`.
