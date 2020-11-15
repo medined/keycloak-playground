@@ -10,14 +10,26 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 IP_ADDRESS=$(terraform output keycloak_public_ip)
 KEYCLOAK_ADMIN_USERNAME=$(terraform output keycloak_admin_username)
 KEYCLOAK_ADMIN_PASSWORD=$(terraform output keycloak_admin_password)
+KEYCLOAK_SUBDOMAIN_NAME=${KEYCLOAK_SUBDOMAIN_NAME:-"keycloak"}
 PKI_PRIVATE_KEY=$(terraform output pki_private_key)
 SSH_USER=$(terraform output ssh_user)
+
+#
+# INPUT VALIDATION
+#
+if [ -z $K8S_DOMAIN_NAME ]; then
+    echo "Missing Environment Variable: K8S_DOMAIN_NAME"
+    exit 1
+fi
+
+KEYCLOAK_FQDN="$KEYCLOAK_SUBDOMAIN_NAME.$K8S_DOMAIN_NAME"
 
 python3 \
   $ANSIBLE_PLAYBOOK \
   -v \
   --extra-vars "keycloak_admin_username=$KEYCLOAK_ADMIN_USERNAME" \
   --extra-vars "keycloak_admin_password=$KEYCLOAK_ADMIN_PASSWORD" \
+  --extra-vars "keycloak_fqdn=$KEYCLOAK_FQDN" \
   --extra-vars "ssh_user=$SSH_USER" \
   -i "$IP_ADDRESS," \
   --private-key $PKI_PRIVATE_KEY \

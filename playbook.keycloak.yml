@@ -9,21 +9,34 @@
 
   tasks:
 
-    - name: upgrade all packages
-      yum:
-        name: '*'
-        state: latest
-
     - name: add docker yum repository
       command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+    - name: install epel
+      yum:
+        state: latest
+        name:
+          - epel-release
 
     - name: install packages
       yum:
         state: latest
         name:
+          - certbot
+          - containerd.io
           - docker-ce
           - docker-ce-cli
-          - containerd.io
+          - python2-certbot-dns-route53
+          - python-pip
+
+    - name: upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: install python packages
+      pip:
+        name: futures
 
     - name: Start and enable docker
       systemd:
@@ -62,6 +75,13 @@
         dest: /usr/local/bin/jq
         url: https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
         mode: 0755
+
+    - name: get ssl certificate
+      command: certbot certonly -n --dns-route53 -d {{ keycloak_fqdn }}
+
+    #  /etc/letsencrypt/live/keycloak.davidm.xyz/fullchain.pem
+  #    /etc/letsencrypt/live/keycloak.davidm.xyz/privkey.pem
+
 
     - name: stop keycloak container
       command: docker stop keycloak
