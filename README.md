@@ -1,70 +1,62 @@
-# OpenRMF at AWS
+# Setup Keycloak For Kubernetes Authentication
 
-This project provisions an EC2 server with the OpenRMF software running on it.
-
-See **Caution** section below.
-
-2020-Jun-18 - The project is based on OpenRMF Core OSS 1.0.
-
-## Security
-
-When provisioning the server, the RMF Admin password will be displayed in the output.
-
-Please manually change the admin password for keycloak. It is hardcoded in the OpenRMF project.
-
-## Links
-
-* https://www.openrmf.io/
-
-## Create PKI Public Key
-
-You'll need an EC2 key pair in order to SSH into the server and to let Ansible run its playbooks. After creating a key pair, generate a public key using the following command:
+* Create `tfvars` file.
 
 ```
-ssh-keygen -y -f $HOME/Downloads/pem/openrmf.pem > $HOME/Downloads/pem/openrmf.pub
+cp terraform.tfvars.example terraform.tfvars
 ```
 
-## Initialization
+* Update the `tfvars` file so the settings are correct. The password must follow the following policies:
+    * at least 12 digits
+    * 2 upper
+    * 2 lower
+    * 2 number
+    * 2 special character
 
-* Copy the variable example file.
+* Provision the AWS hardware.
 
-```bash
-cp variables.tf.example variables.tf
+```
+./01-tfa
 ```
 
-* Setup `variables.tf`. Make sure to update these variables:
-    * aws_profile
-    * pki_private_key
-    * rmf_admin_password
-    * subnet_id
-    * vpc_id
+* Create the sub-domain.
 
-* Terraform
-
-```bash
-terraform init
-terraform apply
+```
+./02-create-vanity-url
 ```
 
-* SSH to the EC2 server.
+* Install Keycloak on the server.
 
-```bash
-./ssh-to-server.sh
+```
+./03-run-playbook
 ```
 
-* Visit the Keycloak web page.
+* Configure KeyCloak with a realm, admin user and realm users.
 
-```bash
-./open-keycloak-page.sh
+```
+./04-configure-keycloak
 ```
 
-* Visit the OpenRMF web page.
+## Visit KeyCloak Page
 
-```bash
-./open-openrmf-page.sh
+If you need to visit the KeyCloak home page, use the provided script.
+
+```
+./cmd-open-keycloak-page
 ```
 
-## Caution
+## SSH
 
-In order to make this automation work, I needed to provide my own versions of two files. These are `setup-realm-linux.sh` and `docker-compose.yml` from the OpenRMF zip file. This makes this project brittle.
+If you need to SSH to the KeyCloak server, use the provided script.
 
+```
+./cmd-ssh-to-keycloak
+```
+
+## Destroy KeyCloak
+
+If you need to de-provision the KeyCloak server, use the provided script.
+
+```
+./cmd-tfd
+```

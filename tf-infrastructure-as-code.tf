@@ -65,6 +65,36 @@ output "keycloak_admin_username" {
 output "keycloak_public_ip" {
   value = aws_eip.keycloak.public_ip
 }
+output "keycloak_realm" {
+  value = var.keycloak_realm
+}
+output "keycloak_realm_admin_password" {
+  sensitive   = true
+  value = var.keycloak_realm_admin_password
+}
+output "keycloak_realm_admin_username" {
+  value = var.keycloak_realm_admin_username
+}
+output "keycloak_realm_developer_password" {
+  sensitive   = true
+  value = var.keycloak_realm_developer_password
+}
+output "keycloak_realm_developer_username" {
+  value = var.keycloak_realm_developer_username
+}
+output "keycloak_realm_visitor_password" {
+  sensitive   = true
+  value = var.keycloak_realm_visitor_password
+}
+output "keycloak_realm_visitor_username" {
+  value = var.keycloak_realm_visitor_username
+}
+output "keycloak_client" {
+  value = var.keycloak_client
+}
+output "keycloak_client_base_url" {
+  value = var.keycloak_client_base_url
+}
 output "pki_private_key" {
   value = var.pki_private_key
 }
