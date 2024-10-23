@@ -11,5 +11,5 @@ pycparser==2.20
 PyYAML==5.4
 requests==2.25.0
 six==1.15.0
-urllib3==1.26.5
+urllib3==1.26.19
 websocket-client==0.57.0
